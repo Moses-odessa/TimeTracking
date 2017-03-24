@@ -1,5 +1,6 @@
 package ua.moses.View;
 
+import java.util.Arrays;
 import java.util.Scanner;
 
 /**
@@ -7,9 +8,9 @@ import java.util.Scanner;
  */
 public class Console implements View {
     @Override
-    public String Read() {
+    public String[] Read() {
         Scanner scanner = new Scanner(System.in);
-        return scanner.nextLine();
+        return scanner.nextLine().split("\\|");
     }
 
     @Override

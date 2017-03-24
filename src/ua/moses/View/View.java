@@ -2,7 +2,7 @@ package ua.moses.View;
 
 
 public interface View {
-    String Read ();
+    String[] Read ();
     void Write(String s);
 
 }
