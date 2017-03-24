@@ -1,6 +1,7 @@
 package ua.moses.Controller;
 
 import ua.moses.Model.DataOperations;
+import ua.moses.Model.Workers;
 import ua.moses.View.View;
 
 /**
@@ -37,11 +38,11 @@ public class MainController {
     }
 
     private void printWorkersList() {
-        String[] workers = data.getWorkersList();
+        Workers[] workers = data.getWorkersList();
         view.Write("Список сотрудников:");
 
         for (int i = 0; i < workers.length ; i++) {
-            view.Write(workers[i]);
+            view.Write(workers[i].getId() + ":" + workers[i].getFullname());
 
         }
     }

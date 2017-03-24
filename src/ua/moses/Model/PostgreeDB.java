@@ -29,22 +29,21 @@ public class PostgreeDB implements DataOperations {
     }
 
     @Override
-    public String[] getWorkersList() {
+    public Workers[] getWorkersList() {
         try {
             int size = getSize("employees");
 
             Statement stmt = connection.createStatement();
             ResultSet rs = stmt.executeQuery("SELECT * FROM public.employees");
             ResultSetMetaData rsmd = rs.getMetaData();
-            String[] result = new String[size];
-
-
+            Workers[] result = new Workers[size];
             int index = 0;
             while (rs.next()) {
-                DataSet dataSet = new DataSet();
+                Workers dataSet = new Workers();
                 result[index++] = dataSet;
                 for (int i = 1; i <= rsmd.getColumnCount(); i++) {
-                    dataSet.put(rsmd.getColumnName(i), rs.getObject(i));
+                    dataSet.setId(rs.getInt("id"));
+                    dataSet.setFullname(rs.getString("fullname"));
                 }
             }
             rs.close();
@@ -52,7 +51,16 @@ public class PostgreeDB implements DataOperations {
             return result;
         } catch (SQLException e) {
             e.printStackTrace();
-            return new DataSet[0];
+            return new Workers[0];
         }
+    }
+
+    private int getSize(String tableName) throws SQLException {
+        Statement stmt = connection.createStatement();
+        ResultSet rsCount = stmt.executeQuery("SELECT COUNT(*) FROM public." + tableName);
+        rsCount.next();
+        int size = rsCount.getInt(1);
+        rsCount.close();
+        return size;
     }
 }
