@@ -1,6 +1,8 @@
 package ua.moses.Model;
 
 import java.sql.*;
+import java.util.Arrays;
+
 
 /**
  * Created by Admin on 23.03.2017.
@@ -8,7 +10,9 @@ import java.sql.*;
 public class PostgreeDB implements DataOperations {
 
     private Connection connection;
-    private final String tableNameWorkers = "employees";
+    private final String workersTableName = "employees";
+    private final String[] workersTableColumns = {"id","fullname"};
+    private final String[] recordingTableColumns = {"id", "worker_id", "type", "date", "time"};
 
     public PostgreeDB(String database, String userName, String password){
         try {
@@ -35,7 +39,7 @@ public class PostgreeDB implements DataOperations {
             int size = getSize("employees");
 
             Statement stmt = connection.createStatement();
-            ResultSet rs = stmt.executeQuery("SELECT * FROM public." + tableNameWorkers);
+            ResultSet rs = stmt.executeQuery("SELECT * FROM public." + workersTableName);
             ResultSetMetaData rsmd = rs.getMetaData();
             Workers[] result = new Workers[size];
             int index = 0;
@@ -57,17 +61,79 @@ public class PostgreeDB implements DataOperations {
     }
 
     @Override
-    public void addWorker(String fullname) {
+    public boolean addWorker(String fullname) {
+        String[] columns = Arrays.copyOfRange(workersTableColumns,1,2);
+
+        String[] values = new String[1];
+        values[0] = fullname;
+        return addValue(workersTableName, columns, values);
+
+    }
+
+    @Override
+    public boolean removeWorker(String idOrFullname) {
+        String criteria;
+        if (isInt(idOrFullname)){
+            criteria = "id = " + idOrFullname;
+        } else {
+            criteria = "fullname = '" + idOrFullname + "'";;
+        }
+
+        return removeValue(workersTableName, criteria);
+    }
+
+    private boolean isInt(String s) {
+        try {
+            Integer.parseInt(s);
+            return true;
+        } catch (NumberFormatException e) {
+            return false;
+        }
+    }
+
+
+    private boolean removeValue(String tableName, String criteria) {
+        boolean result = false;
         try {
             Statement stmt = connection.createStatement();
 
-            String sql = "INSERT INTO public." + tableNameWorkers + " (fullname)" +
-                    "VALUES ('" + fullname + "')";
-            stmt.executeUpdate(sql);
+            String sql = "DELETE FROM public." + workersTableName + " WHERE " + criteria;
+            if (stmt.executeUpdate(sql)>0) result = true;
             stmt.close();
+
         } catch (SQLException e) {
-            e.printStackTrace();
+            //e.printStackTrace();
+
         }
+        return result;
+    }
+
+    private boolean addValue(String tableName, String [] columns, Object[] values) {
+        boolean result = false;
+        try {
+            Statement stmt = connection.createStatement();
+
+            String sql = "INSERT INTO public." + workersTableName + " (" + extractValues(columns, "") + ")" +
+                    "VALUES (" + extractValues(values, "'") + ")";
+            if (stmt.executeUpdate(sql)>0) result = true;
+            stmt.close();
+
+        } catch (SQLException e) {
+            //e.printStackTrace();
+
+        }
+        return result;
+    }
+
+    private String extractValues(Object[] values, String framing) {
+        String result = "";
+        for (int i = 0; i < values.length; i++) {
+            result+=framing + values[i] + framing;
+            if (i < values.length - 1){
+                result+= ", ";
+            }
+        }
+        return result;
     }
 
     private int getSize(String tableName) throws SQLException {

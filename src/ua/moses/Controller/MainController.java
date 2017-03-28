@@ -28,6 +28,8 @@ public class MainController {
                             break;
                 case "add": addWorker(command);
                     break;
+                case "remove": removeWorker(command);
+                    break;
 
                 case "exit": System.exit(0);
                     break;
@@ -42,7 +44,23 @@ public class MainController {
 
     private void addWorker(String[] command) {
         if (command.length > 1 && command[1] != ""){
-            data.addWorker(command[1]);
+            if (data.addWorker(command[1])){
+                view.Write("Сотрудник " + command[1] + " добавлен в список." );
+            } else {
+                view.Write("Ошибка добавления");
+            };
+        } else {
+            view.Write("Неверный формат комманды");
+        }
+    }
+
+    private void removeWorker(String[] command) {
+        if (command.length > 1 && command[1] != ""){
+            if (data.removeWorker(command[1])){
+                view.Write("Сотрудник " + command[1] + " удален." );
+            } else {
+                view.Write("Ошибка удаления");
+            };
         } else {
             view.Write("Неверный формат комманды");
         }
@@ -62,6 +80,7 @@ public class MainController {
         view.Write("Список доступных команд:");
         view.Write("workers: выводит список сотрудников");
         view.Write("add|fullname: добавляет сотрудника fullname в список сотрудников");
+        view.Write("remove|fullname or id: удаляет сотрудника по имени или id");
         view.Write("help: для вывода этой справки");
         view.Write("exit: завершение программы");
     }
