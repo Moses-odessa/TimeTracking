@@ -11,6 +11,7 @@ public class PostgreeDB implements DataOperations {
 
     private Connection connection;
     private final String workersTableName = "employees";
+    private final String recordingTableName = "notation";
     private final String[] workersTableColumns = {"id","fullname"};
     private final String[] recordingTableColumns = {"id", "worker_id", "type", "date", "time"};
 
@@ -72,14 +73,32 @@ public class PostgreeDB implements DataOperations {
 
     @Override
     public boolean removeWorker(String idOrFullname) {
-        String criteria;
+        int id;
         if (isInt(idOrFullname)){
-            criteria = "id = " + idOrFullname;
+            id = Integer.parseInt(idOrFullname);
         } else {
-            criteria = "fullname = '" + idOrFullname + "'";;
+            id = getIdByFullname(idOrFullname);;
         }
 
-        return removeValue(workersTableName, criteria);
+        removeValue(recordingTableName, "worker_id = " + id);
+        return removeValue(workersTableName, "id = " + id);
+    }
+
+
+
+    private int getIdByFullname(String fullname)  {
+        int result=-1;
+        try {
+            Statement stmt = null;
+            stmt = connection.createStatement();
+            ResultSet rsCount = stmt.executeQuery("SELECT id FROM public." + workersTableName + " WHERE fullname='" + fullname +"'");
+            rsCount.next();
+            result = rsCount.getInt("id");
+            rsCount.close();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return result;
     }
 
     private boolean isInt(String s) {
