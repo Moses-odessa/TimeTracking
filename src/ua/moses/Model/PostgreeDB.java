@@ -8,6 +8,7 @@ import java.sql.*;
 public class PostgreeDB implements DataOperations {
 
     private Connection connection;
+    private final String tableNameWorkers = "employees";
 
     public PostgreeDB(String database, String userName, String password){
         try {
@@ -34,7 +35,7 @@ public class PostgreeDB implements DataOperations {
             int size = getSize("employees");
 
             Statement stmt = connection.createStatement();
-            ResultSet rs = stmt.executeQuery("SELECT * FROM public.employees");
+            ResultSet rs = stmt.executeQuery("SELECT * FROM public." + tableNameWorkers);
             ResultSetMetaData rsmd = rs.getMetaData();
             Workers[] result = new Workers[size];
             int index = 0;
@@ -52,6 +53,20 @@ public class PostgreeDB implements DataOperations {
         } catch (SQLException e) {
             e.printStackTrace();
             return new Workers[0];
+        }
+    }
+
+    @Override
+    public void addWorker(String fullname) {
+        try {
+            Statement stmt = connection.createStatement();
+
+            String sql = "INSERT INTO public." + tableNameWorkers + " (fullname)" +
+                    "VALUES ('" + fullname + "')";
+            stmt.executeUpdate(sql);
+            stmt.close();
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
     }
 

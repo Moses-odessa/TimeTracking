@@ -26,6 +26,9 @@ public class MainController {
                             break;
                 case "workers": printWorkersList();
                             break;
+                case "add": addWorker(command);
+                    break;
+
                 case "exit": System.exit(0);
                     break;
                 default: view.Write("Неизвестная команда. Повторите пожалуйста ввод");
@@ -35,6 +38,14 @@ public class MainController {
 
         }
 
+    }
+
+    private void addWorker(String[] command) {
+        if (command.length > 1 && command[1] != ""){
+            data.addWorker(command[1]);
+        } else {
+            view.Write("Неверный формат комманды");
+        }
     }
 
     private void printWorkersList() {
@@ -50,6 +61,7 @@ public class MainController {
     private void printCommandList() {
         view.Write("Список доступных команд:");
         view.Write("workers: выводит список сотрудников");
+        view.Write("add|fullname: добавляет сотрудника fullname в список сотрудников");
         view.Write("help: для вывода этой справки");
         view.Write("exit: завершение программы");
     }

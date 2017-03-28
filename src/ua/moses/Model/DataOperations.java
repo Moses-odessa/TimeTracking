@@ -5,5 +5,6 @@ package ua.moses.Model;
  */
 public interface DataOperations {
     Workers[] getWorkersList();
+    void addWorker(String fullname);
 
 }
