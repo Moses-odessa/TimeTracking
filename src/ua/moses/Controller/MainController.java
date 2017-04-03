@@ -4,6 +4,10 @@ import ua.moses.Model.DataOperations;
 import ua.moses.Model.Workers;
 import ua.moses.View.View;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+
 /**
  * Created by Admin on 24.03.2017.
  */
@@ -30,6 +34,10 @@ public class MainController {
                     break;
                 case "remove": removeWorker(command);
                     break;
+                case "checkin": checkIn(command);
+                    break;
+                case "checkout": checkOut(command);
+                    break;
 
                 case "exit": System.exit(0);
                     break;
@@ -41,6 +49,48 @@ public class MainController {
         }
 
     }
+
+    private void checkIn(String[] command) {
+        check(command, "Приход");
+    }
+
+    private void checkOut(String[] command) {
+        check(command, "Уход");
+    }
+
+    private void check(String[] command, String type) {
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+        String setDate = dateFormat.format(new Date());
+        dateFormat = new SimpleDateFormat("HH:mm");
+        String setTime = dateFormat.format(new Date());
+        if (command.length > 3) setDate = command[3];
+        if (command.length > 2) setTime = command[2];
+        String setType;
+        if (type.equalsIgnoreCase("Приход")){
+            setType = "TRUE";
+        } else {
+            setType = "FALSE";
+        }
+
+        dateFormat = new SimpleDateFormat("yyyy-mm-dd HH:mm");
+        try {
+            Date setDateTime = dateFormat.parse(setDate + " " + setTime);
+            if (command.length > 1 && command[1] != ""){
+                if (data.check(command[1], setType, setDateTime)) {
+                    view.Write(type + " сотрудника " + command[1] + " в " + setDateTime +" отмечен успешно" );
+
+                } else {
+                    view.Write("Невозможно отметить " + type + " сотрудника " + command[1] + " в " + setDateTime);
+                }
+            } else {
+                view.Write("Неверный формат комманды");
+            }
+
+        } catch (ParseException e) {
+            view.Write("Неверный формат даты/времени");
+        }
+    }
+
 
     private void addWorker(String[] command) {
         if (command.length > 1 && command[1] != ""){
@@ -81,6 +131,12 @@ public class MainController {
         view.Write("workers: выводит список сотрудников");
         view.Write("add|fullname: добавляет сотрудника fullname в список сотрудников");
         view.Write("remove|fullname or id: удаляет сотрудника по имени или id");
+        view.Write("checkin|fullname or id|time|date: отмечает приход на работу сотрудника fullname по имени или id\n" +
+                "\tгде time - время в формате hh:mm, и date - дата в формате YYYY-MM-DD]n" +
+                "\tесли дата и время опущены - используются текущие");
+        view.Write("checkout|fullname or id|time|date: отмечает приход на работу сотрудника fullname по имени или id\n" +
+                "\tгде time - время в формате hh:mm, и date - дата в формате YYYY-MM-DD]n" +
+                "\tесли дата и время опущены - используются текущие");
         view.Write("help: для вывода этой справки");
         view.Write("exit: завершение программы");
     }

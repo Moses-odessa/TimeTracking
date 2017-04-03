@@ -1,7 +1,9 @@
 package ua.moses.Model;
 
 import java.sql.*;
-import java.util.Arrays;
+import java.util.Date;
+import java.text.SimpleDateFormat;
+import java.util.*;
 
 
 /**
@@ -62,28 +64,49 @@ public class PostgreeDB implements DataOperations {
     }
 
     @Override
-    public boolean addWorker(String fullname) {
+    public boolean addWorker(String fullName) {
         String[] columns = Arrays.copyOfRange(workersTableColumns,1,2);
 
         String[] values = new String[1];
-        values[0] = fullname;
+        values[0] = fullName;
         return addValue(workersTableName, columns, values);
 
     }
 
     @Override
-    public boolean removeWorker(String idOrFullname) {
+    public boolean removeWorker(String idOrFullName) {
         int id;
-        if (isInt(idOrFullname)){
-            id = Integer.parseInt(idOrFullname);
+        if (isInt(idOrFullName)){
+            id = Integer.parseInt(idOrFullName);
         } else {
-            id = getIdByFullname(idOrFullname);;
+            id = getIdByFullname(idOrFullName);;
         }
 
         removeValue(recordingTableName, "worker_id = " + id);
         return removeValue(workersTableName, "id = " + id);
     }
 
+
+    @Override
+    public boolean check(String idOrFullName, String type, Date datetime) {
+        int workerID;
+        if (isInt(idOrFullName)){
+            workerID = Integer.parseInt(idOrFullName);
+        } else {
+            workerID = getIdByFullname(idOrFullName);;
+        }
+
+        String[] columns = Arrays.copyOfRange(recordingTableColumns,1,recordingTableColumns.length);
+        Object[] values = new Object[recordingTableColumns.length-1];
+        values[0] = workerID;
+        values[1] = type;
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+        values[2] = dateFormat.format(datetime);
+        dateFormat = new SimpleDateFormat("HH:mm");
+        values[3] = dateFormat.format(datetime);
+
+        return addValue(recordingTableName, columns, values);
+    }
 
 
     private int getIdByFullname(String fullname)  {
@@ -132,13 +155,13 @@ public class PostgreeDB implements DataOperations {
         try {
             Statement stmt = connection.createStatement();
 
-            String sql = "INSERT INTO public." + workersTableName + " (" + extractValues(columns, "") + ")" +
+            String sql = "INSERT INTO public." + tableName + " (" + extractValues(columns, "") + ")" +
                     "VALUES (" + extractValues(values, "'") + ")";
             if (stmt.executeUpdate(sql)>0) result = true;
             stmt.close();
 
         } catch (SQLException e) {
-            //e.printStackTrace();
+            e.printStackTrace();
 
         }
         return result;
