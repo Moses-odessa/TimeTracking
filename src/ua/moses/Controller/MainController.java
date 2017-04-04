@@ -1,16 +1,15 @@
 package ua.moses.Controller;
 
 import ua.moses.Model.DataOperations;
-import ua.moses.Model.Workers;
+import ua.moses.Model.WorkTime;
+import ua.moses.Model.Worker;
 import ua.moses.View.View;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
-/**
- * Created by Admin on 24.03.2017.
- */
+
 public class MainController {
     private DataOperations data;
     private View view;
@@ -38,6 +37,11 @@ public class MainController {
                     break;
                 case "checkout": checkOut(command);
                     break;
+                case "show": showTime(command);
+                    break;
+                case "showall": showTimeAll(command);
+                    break;
+
 
                 case "exit": System.exit(0);
                     break;
@@ -48,6 +52,49 @@ public class MainController {
 
         }
 
+    }
+
+    private void showTimeAll(String[] command) {
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+        Date dateFrom = new Date(0);
+        Date dateTo = new Date();
+        try {
+            if (command.length > 2) dateTo = dateFormat.parse(command[2]);
+            if (command.length > 1) dateFrom = dateFormat.parse(command[1]);
+            Worker[] workers = data.getWorkersList();
+            view.Write("Отчет за период с " + dateFormat.format(dateFrom) + " по " + dateFormat.format(dateTo));
+            view.Write("------------------------------------");
+            for (Worker worker: workers) {
+                WorkTime worktime = data.getWorkingHours(Integer.toString(worker.getId()),dateFrom, dateTo);
+                view.Write(worktime.toString());
+            }
+            view.Write("------------------------------------");
+        } catch (ParseException e) {
+            view.Write("Неверный формат даты/времени");
+        }
+
+    }
+
+    private void showTime(String[] command) {
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+        Date dateFrom = new Date(0);
+        Date dateTo = new Date();
+        try {
+            if (command.length > 3) dateTo = dateFormat.parse(command[3]);
+            if (command.length > 2) dateFrom = dateFormat.parse(command[2]);
+            if (command.length > 1 && command[1] != ""){
+                WorkTime worktime = data.getWorkingHours(command[1],dateFrom, dateTo);
+                view.Write("Отчет за период с " + dateFormat.format(dateFrom) + " по " + dateFormat.format(dateTo));
+                view.Write("------------------------------------");
+                view.Write(worktime.toString());
+                view.Write("------------------------------------");
+            } else {
+                view.Write("Неверный формат комманды");
+            }
+
+        } catch (ParseException e) {
+            view.Write("Неверный формат даты/времени");
+        }
     }
 
     private void checkIn(String[] command) {
@@ -72,7 +119,7 @@ public class MainController {
             setType = "FALSE";
         }
 
-        dateFormat = new SimpleDateFormat("yyyy-mm-dd HH:mm");
+        dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm");
         try {
             Date setDateTime = dateFormat.parse(setDate + " " + setTime);
             if (command.length > 1 && command[1] != ""){
@@ -117,26 +164,32 @@ public class MainController {
     }
 
     private void printWorkersList() {
-        Workers[] workers = data.getWorkersList();
+        Worker[] workers = data.getWorkersList();
         view.Write("Список сотрудников:");
-
-        for (int i = 0; i < workers.length ; i++) {
-            view.Write(workers[i].getId() + ":" + workers[i].getFullname());
-
+        view.Write("------------------------------------");
+        for (Worker worker:workers) {
+            view.Write(worker.toString());
         }
+        view.Write("------------------------------------");
     }
 
     private void printCommandList() {
         view.Write("Список доступных команд:");
         view.Write("workers: выводит список сотрудников");
         view.Write("add|fullname: добавляет сотрудника fullname в список сотрудников");
-        view.Write("remove|fullname or id: удаляет сотрудника по имени или id");
-        view.Write("checkin|fullname or id|time|date: отмечает приход на работу сотрудника fullname по имени или id\n" +
-                "\tгде time - время в формате hh:mm, и date - дата в формате YYYY-MM-DD]n" +
+        view.Write("remove|fullname_or_id: удаляет сотрудника по имени или id");
+        view.Write("checkin|fullname_or_id|time|date: отмечает приход на работу сотрудника fullname по имени или id\n" +
+                "\tгде time - время в формате hh:mm, и date - дата в формате YYYY-MM-DD\n" +
                 "\tесли дата и время опущены - используются текущие");
-        view.Write("checkout|fullname or id|time|date: отмечает приход на работу сотрудника fullname по имени или id\n" +
-                "\tгде time - время в формате hh:mm, и date - дата в формате YYYY-MM-DD]n" +
+        view.Write("checkout|fullname_or_id|time|date: отмечает приход на работу сотрудника fullname по имени или id\n" +
+                "\tгде time - время в формате hh:mm, и date - дата в формате YYYY-MM-DD\n" +
                 "\tесли дата и время опущены - используются текущие");
+        view.Write("show|fullname_or_id|datefrom|dateto: выводит отработанное время сотрудника fullname по имени или id\n" +
+                "\tгде datefrom и dateto - дата в формате YYYY-MM-DD\n" +
+                "\tесли даты опущены - используются весь период");
+        view.Write("showall|datefrom|dateto: выводит отработанное время всех сотрудников\n" +
+                "\tгде datefrom и dateto - дата в формате YYYY-MM-DD\n" +
+                "\tесли даты опущены - используются весь период");
         view.Write("help: для вывода этой справки");
         view.Write("exit: завершение программы");
     }

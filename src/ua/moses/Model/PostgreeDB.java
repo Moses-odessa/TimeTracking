@@ -15,7 +15,7 @@ public class PostgreeDB implements DataOperations {
     private final String workersTableName = "employees";
     private final String recordingTableName = "notation";
     private final String[] workersTableColumns = {"id","fullname"};
-    private final String[] recordingTableColumns = {"id", "worker_id", "type", "date", "time"};
+    private final String[] recordingTableColumns = {"id", "worker_id", "type", "milisec"};
 
     public PostgreeDB(String database, String userName, String password){
         try {
@@ -37,29 +37,25 @@ public class PostgreeDB implements DataOperations {
     }
 
     @Override
-    public Workers[] getWorkersList() {
+    public Worker[] getWorkersList() {
         try {
-            int size = getSize("employees");
-
+            int size = getSize(workersTableName);
             Statement stmt = connection.createStatement();
             ResultSet rs = stmt.executeQuery("SELECT * FROM public." + workersTableName);
-            ResultSetMetaData rsmd = rs.getMetaData();
-            Workers[] result = new Workers[size];
+            Worker[] result = new Worker[size];
             int index = 0;
             while (rs.next()) {
-                Workers dataSet = new Workers();
-                result[index++] = dataSet;
-                for (int i = 1; i <= rsmd.getColumnCount(); i++) {
-                    dataSet.setId(rs.getInt("id"));
-                    dataSet.setFullname(rs.getString("fullname"));
-                }
+                result[index] = new Worker();
+                result[index].setId(rs.getInt("id"));
+                result[index].setFullName(rs.getString("fullname"));
+                index++;
             }
             rs.close();
             stmt.close();
             return result;
         } catch (SQLException e) {
             e.printStackTrace();
-            return new Workers[0];
+            return new Worker[0];
         }
     }
 
@@ -75,12 +71,7 @@ public class PostgreeDB implements DataOperations {
 
     @Override
     public boolean removeWorker(String idOrFullName) {
-        int id;
-        if (isInt(idOrFullName)){
-            id = Integer.parseInt(idOrFullName);
-        } else {
-            id = getIdByFullname(idOrFullName);;
-        }
+        int id = getWorkerID(idOrFullName);
 
         removeValue(recordingTableName, "worker_id = " + id);
         return removeValue(workersTableName, "id = " + id);
@@ -89,32 +80,83 @@ public class PostgreeDB implements DataOperations {
 
     @Override
     public boolean check(String idOrFullName, String type, Date datetime) {
-        int workerID;
-        if (isInt(idOrFullName)){
-            workerID = Integer.parseInt(idOrFullName);
-        } else {
-            workerID = getIdByFullname(idOrFullName);;
-        }
+        int workerID = getWorkerID(idOrFullName);
 
         String[] columns = Arrays.copyOfRange(recordingTableColumns,1,recordingTableColumns.length);
         Object[] values = new Object[recordingTableColumns.length-1];
         values[0] = workerID;
         values[1] = type;
-        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
-        values[2] = dateFormat.format(datetime);
-        dateFormat = new SimpleDateFormat("HH:mm");
-        values[3] = dateFormat.format(datetime);
+        values[2] = datetime.getTime();
 
         return addValue(recordingTableName, columns, values);
     }
 
+    private int getWorkerID(String idOrFullName) {
+        int workerID;
+        if (isInt(idOrFullName)){
+            workerID = Integer.parseInt(idOrFullName);
+        } else {
+            workerID = getIdByFullName(idOrFullName);;
+        }
+        return workerID;
+    }
 
-    private int getIdByFullname(String fullname)  {
+    @Override
+    public WorkTime getWorkingHours(String idOrFullName, Date dateFrom, Date dateTo) {
+        WorkTime result = new WorkTime();
+        Worker worker = new Worker();
+        worker.setId(getWorkerID(idOrFullName));
+        worker.setFullName(getWorkerFullName(worker.getId()));
+        result.setWorker(worker);
+        try {
+            Statement stmt;
+            stmt = connection.createStatement();
+            ResultSet rsCount = stmt.executeQuery("SELECT worker_id,\n" +
+                    "SUM(CASE WHEN type THEN (-milisec)\n" +
+                    "     ELSE (milisec)\n" +
+                    "     END) as mili\n" +
+                    "FROM public." + recordingTableName + "\n" +
+                    "Where worker_id=" + result.getWorker().getId() + "\n" +
+                    "group by worker_id");
+
+            if (rsCount.next()){
+                result.setWorkingHours(rsCount.getLong("mili")/ (60 * 60 * 1000));
+            } else {
+                result.setWorkingHours(0);
+            }
+            rsCount.close();
+            stmt.close();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return result;
+    }
+
+    private String getWorkerFullName(int id) {
+        String result="";
+        try {
+            Statement stmt = null;
+            stmt = connection.createStatement();
+            ResultSet rsCount = stmt.executeQuery("SELECT fullname FROM public." + workersTableName
+                    + " WHERE id=" + id);
+            if (rsCount.next()) {
+                result = rsCount.getString("fullname");
+            }
+            rsCount.close();
+            stmt.close();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return result;
+    }
+
+
+    private int getIdByFullName(String fullName)  {
         int result=-1;
         try {
             Statement stmt = null;
             stmt = connection.createStatement();
-            ResultSet rsCount = stmt.executeQuery("SELECT id FROM public." + workersTableName + " WHERE fullname='" + fullname +"'");
+            ResultSet rsCount = stmt.executeQuery("SELECT id FROM public." + workersTableName + " WHERE fullName='" + fullName +"'");
             rsCount.next();
             result = rsCount.getInt("id");
             rsCount.close();
@@ -133,13 +175,12 @@ public class PostgreeDB implements DataOperations {
         }
     }
 
-
     private boolean removeValue(String tableName, String criteria) {
         boolean result = false;
         try {
             Statement stmt = connection.createStatement();
 
-            String sql = "DELETE FROM public." + workersTableName + " WHERE " + criteria;
+            String sql = "DELETE FROM public." + tableName + " WHERE " + criteria;
             if (stmt.executeUpdate(sql)>0) result = true;
             stmt.close();
 
