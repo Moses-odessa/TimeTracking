@@ -1,5 +1,6 @@
 package ua.moses.Model;
 
+import java.util.ArrayList;
 import java.util.Date;
 
 /**
@@ -11,6 +12,7 @@ public interface DataOperations {
     boolean removeWorker(String idOrFullName);
     boolean check(String idOrFullName, String type, Date datetime);
     WorkTime getWorkingHours(String idOrFullName, Date dateFrom, Date dateTo);
+    ArrayList<JournalEntry> getJournal(String idOrFullName, Date dateFrom, Date dateTo);
 
 
 }

@@ -2,7 +2,6 @@ package ua.moses.Model;
 
 import java.sql.*;
 import java.util.Date;
-import java.text.SimpleDateFormat;
 import java.util.*;
 
 
@@ -106,7 +105,7 @@ public class PostgreeDB implements DataOperations {
         WorkTime result = new WorkTime();
         Worker worker = new Worker();
         worker.setId(getWorkerID(idOrFullName));
-        worker.setFullName(getWorkerFullName(worker.getId()));
+        worker.setFullName(getFullNameById(worker.getId()));
         result.setWorker(worker);
         try {
             Statement stmt;
@@ -116,8 +115,10 @@ public class PostgreeDB implements DataOperations {
                     "     ELSE (milisec)\n" +
                     "     END) as mili\n" +
                     "FROM public." + recordingTableName + "\n" +
-                    "Where worker_id=" + result.getWorker().getId() + "\n" +
-                    "group by worker_id");
+                    "WHERE worker_id=" + result.getWorker().getId() +
+                    " AND milisec >= " + dateFrom.getTime() +
+                    " AND milisec < " + (dateTo.getTime()+ 24 * 60 * 60 * 1000)+"\n" +
+                    "GROUP BY worker_id");
 
             if (rsCount.next()){
                 result.setWorkingHours(rsCount.getLong("mili")/ (60 * 60 * 1000));
@@ -132,7 +133,39 @@ public class PostgreeDB implements DataOperations {
         return result;
     }
 
-    private String getWorkerFullName(int id) {
+    @Override
+    public ArrayList<JournalEntry> getJournal(String idOrFullName, Date dateFrom, Date dateTo) {
+        ArrayList<JournalEntry> result = new ArrayList<>();
+        Worker worker = new Worker();
+        worker.setId(getWorkerID(idOrFullName));
+        worker.setFullName(getFullNameById(worker.getId()));
+
+        try {
+            Statement stmt;
+            stmt = connection.createStatement();
+            ResultSet rsCount = stmt.executeQuery("SELECT type, milisec\n" +
+                    "FROM public." + recordingTableName + "\n" +
+                    "WHERE worker_id=" + worker.getId() +
+                    " AND milisec >= " + dateFrom.getTime() +
+                    " AND milisec < " + (dateTo.getTime()+ 24 * 60 * 60 * 1000)+ "\n" +
+                    "ORDER BY milisec");
+
+            while (rsCount.next()){
+                JournalEntry currentEntry = new JournalEntry();
+                currentEntry.setWorker(worker);
+                currentEntry.setType(rsCount.getBoolean("type"));
+                currentEntry.setDate(new Date(rsCount.getLong("milisec")));
+                result.add(currentEntry);
+            }
+            rsCount.close();
+            stmt.close();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return result;
+    }
+
+    private String getFullNameById(int id) {
         String result="";
         try {
             Statement stmt = null;

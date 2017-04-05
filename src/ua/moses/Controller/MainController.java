@@ -1,12 +1,14 @@
 package ua.moses.Controller;
 
 import ua.moses.Model.DataOperations;
+import ua.moses.Model.JournalEntry;
 import ua.moses.Model.WorkTime;
 import ua.moses.Model.Worker;
 import ua.moses.View.View;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 
 
@@ -41,6 +43,8 @@ public class MainController {
                     break;
                 case "showall": showTimeAll(command);
                     break;
+                case "journal": showJournal(command);
+                    break;
 
 
                 case "exit": System.exit(0);
@@ -52,6 +56,30 @@ public class MainController {
 
         }
 
+    }
+
+    private void showJournal(String[] command) {
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+        Date dateFrom = new Date(0);
+        Date dateTo = new Date();
+        try {
+            if (command.length > 3) dateTo = dateFormat.parse(command[3]);
+            if (command.length > 2) dateFrom = dateFormat.parse(command[2]);
+            if (command.length > 1 && command[1] != ""){
+                ArrayList<JournalEntry> journal = data.getJournal(command[1],dateFrom, dateTo);
+                view.Write("Журнал посещений за период с " + dateFormat.format(dateFrom) + " по " + dateFormat.format(dateTo));
+                view.Write("------------------------------------");
+                for (JournalEntry currentEntry : journal) {
+                    view.Write(currentEntry.toString());
+                }
+                view.Write("------------------------------------");
+            } else {
+                view.Write("Неверный формат комманды");
+            }
+
+        } catch (ParseException e) {
+            view.Write("Неверный формат даты/времени");
+        }
     }
 
     private void showTimeAll(String[] command) {
@@ -186,10 +214,13 @@ public class MainController {
                 "\tесли дата и время опущены - используются текущие");
         view.Write("show|fullname_or_id|datefrom|dateto: выводит отработанное время сотрудника fullname по имени или id\n" +
                 "\tгде datefrom и dateto - дата в формате YYYY-MM-DD\n" +
-                "\tесли даты опущены - используются весь период");
+                "\tесли даты опущены - используются весь период до текущей даты");
         view.Write("showall|datefrom|dateto: выводит отработанное время всех сотрудников\n" +
                 "\tгде datefrom и dateto - дата в формате YYYY-MM-DD\n" +
-                "\tесли даты опущены - используются весь период");
+                "\tесли даты опущены - используются весь период до текущей даты");
+        view.Write("journal|fullname_or_id|datefrom|dateto: выводит журнал приходов/уходов сотрудника fullname по имени или id\n" +
+                "\tгде datefrom и dateto - дата в формате YYYY-MM-DD\n" +
+                "\tесли даты опущены - используются весь период до текущей даты");
         view.Write("help: для вывода этой справки");
         view.Write("exit: завершение программы");
     }
