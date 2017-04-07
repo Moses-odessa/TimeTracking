@@ -1,9 +1,11 @@
 package ua.moses.Integration;
 
 
+import org.hamcrest.CoreMatchers;
 import org.junit.Test;
 import ua.moses.Controller.Main;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertThat;
 
 public class IntegrationTest {
     private ConsoleMock console = new ConsoleMock();
@@ -12,6 +14,18 @@ public class IntegrationTest {
         assertEquals(string,
                 console.getOut().trim().replaceAll("\r",""));
     }
+
+    private void assertContains(String string) {
+        assertThat(console.getOut().trim().replaceAll("\r",""),
+                CoreMatchers.containsString(string));
+    }
+
+    private void assertNotContains(String string) {
+        assertThat(console.getOut().trim().replaceAll("\r",""),
+                CoreMatchers.not(CoreMatchers.containsString(string)));
+    }
+
+
 
     @Test
     public void testConnectAndExit() {
@@ -77,6 +91,65 @@ public class IntegrationTest {
                 "Сотрудник Test Test Test добавлен в список.\n" +
                 "Введите команду или help для вывода списка доступных команд:\n" +
                 "Сотрудник Test Test Test удален.\n" +
+                "Введите команду или help для вывода списка доступных команд:\n" +
+                "До скорой встречи!");
+    }
+
+    @Test
+    public void testWorkerList() {
+        String testName = "Test Test Test";
+        testWorkerListAdd(testName);
+        testWorkerListInList(testName);
+        testWorkerListRemove(testName);
+        testWorkerListOutOfList(testName);
+
+
+    }
+
+    private void testWorkerListOutOfList(String testName) {
+        // given
+        console.addIn("workers");
+        console.addIn("exit");
+        // when
+        Main.main(new String[0]);
+
+        // then
+        assertNotContains(testName);
+    }
+
+    private void testWorkerListRemove(String testName) {
+        // given
+        console.addIn("remove|" + testName);
+        console.addIn("exit");
+        // when
+        Main.main(new String[0]);
+
+        // then
+        assertContains(testName);
+    }
+
+    private void testWorkerListInList(String testName) {
+        // given
+        console.addIn("workers");
+        console.addIn("exit");
+        // when
+        Main.main(new String[0]);
+
+        // then
+        assertContains(testName);
+    }
+
+    private void testWorkerListAdd(String testName) {
+        // given
+        console.addIn("add|" + testName);
+        console.addIn("exit");
+        // when
+        Main.main(new String[0]);
+
+        // then
+        assertOut("Добро пожаловать!!!\n" +
+                "Введите команду или help для вывода списка доступных команд:\n" +
+                "Сотрудник " + testName + " добавлен в список.\n" +
                 "Введите команду или help для вывода списка доступных команд:\n" +
                 "До скорой встречи!");
     }
