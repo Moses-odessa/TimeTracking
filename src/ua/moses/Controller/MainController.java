@@ -23,7 +23,8 @@ public class MainController {
 
     public void run() {
         view.Write("Добро пожаловать!!!");
-        while (true){
+        boolean exit = false;
+        while (!exit){
             view.Write("Введите команду или help для вывода списка доступных команд:");
             String[] command = view.Read();
             switch (command[0]){
@@ -46,15 +47,14 @@ public class MainController {
                 case "journal": showJournal(command);
                     break;
 
-
-                case "exit": System.exit(0);
+                case "exit": exit = true;
                     break;
                 default: view.Write("Неизвестная команда. Повторите пожалуйста ввод");
                             break;
 
             }
-
         }
+        view.Write("До скорой встречи!");
 
     }
 
