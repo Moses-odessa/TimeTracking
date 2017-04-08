@@ -134,16 +134,18 @@ public class PostgreeDB implements DataOperations {
     }
 
     @Override
-    public ArrayList<JournalEntry> getJournal(String idOrFullName, Date dateFrom, Date dateTo) {
-        ArrayList<JournalEntry> result = new ArrayList<>();
+    public TimeJournal getJournal(String idOrFullName, Date dateFrom, Date dateTo) {
+        TimeJournal result = new TimeJournal();
         Worker worker = new Worker();
         worker.setId(getWorkerID(idOrFullName));
         worker.setFullName(getFullNameById(worker.getId()));
-
+        result.setWorker(worker);
+        result.setDateFrom(dateFrom);
+        result.setDateTo(dateTo);
         try {
             Statement stmt;
             stmt = connection.createStatement();
-            ResultSet rsCount = stmt.executeQuery("SELECT type, milisec\n" +
+            ResultSet rsCount = stmt.executeQuery("SELECT id, type, milisec\n" +
                     "FROM public." + recordingTableName + "\n" +
                     "WHERE worker_id=" + worker.getId() +
                     " AND milisec >= " + dateFrom.getTime() +
@@ -151,11 +153,7 @@ public class PostgreeDB implements DataOperations {
                     "ORDER BY milisec");
 
             while (rsCount.next()){
-                JournalEntry currentEntry = new JournalEntry();
-                currentEntry.setWorker(worker);
-                currentEntry.setType(rsCount.getBoolean("type"));
-                currentEntry.setDate(new Date(rsCount.getLong("milisec")));
-                result.add(currentEntry);
+                result.addRecord(rsCount.getInt("id"), new Date(rsCount.getLong("milisec")), rsCount.getBoolean("type"));
             }
             rsCount.close();
             stmt.close();

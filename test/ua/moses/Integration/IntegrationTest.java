@@ -76,34 +76,15 @@ public class IntegrationTest {
                 "До скорой встречи!");
     }
 
-    @Test
-    public void testAddAndRemoveWorkersAndExit() {
-        // given
-        console.addIn("add|Test Test Test");
-        console.addIn("remove|Test Test Test");
-        console.addIn("exit");
-        // when
-        Main.main(new String[0]);
 
-        // then
-        assertOut("Добро пожаловать!!!\n" +
-                "Введите команду или help для вывода списка доступных команд:\n" +
-                "Сотрудник Test Test Test добавлен в список.\n" +
-                "Введите команду или help для вывода списка доступных команд:\n" +
-                "Сотрудник Test Test Test удален.\n" +
-                "Введите команду или help для вывода списка доступных команд:\n" +
-                "До скорой встречи!");
-    }
 
     @Test
-    public void testWorkerList() {
+    public void testWorkerAddRemoveList() {
         String testName = "Test Test Test";
         testWorkerListAdd(testName);
         testWorkerListInList(testName);
         testWorkerListRemove(testName);
         testWorkerListOutOfList(testName);
-
-
     }
 
     private void testWorkerListOutOfList(String testName) {
@@ -153,4 +134,6 @@ public class IntegrationTest {
                 "Введите команду или help для вывода списка доступных команд:\n" +
                 "До скорой встречи!");
     }
+
+
 }

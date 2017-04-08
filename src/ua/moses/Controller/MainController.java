@@ -1,7 +1,7 @@
 package ua.moses.Controller;
 
 import ua.moses.Model.DataOperations;
-import ua.moses.Model.JournalEntry;
+import ua.moses.Model.TimeJournal;
 import ua.moses.Model.WorkTime;
 import ua.moses.Model.Worker;
 import ua.moses.View.View;
@@ -66,12 +66,10 @@ public class MainController {
             if (command.length > 3) dateTo = dateFormat.parse(command[3]);
             if (command.length > 2) dateFrom = dateFormat.parse(command[2]);
             if (command.length > 1 && command[1] != ""){
-                ArrayList<JournalEntry> journal = data.getJournal(command[1],dateFrom, dateTo);
+                TimeJournal journal = data.getJournal(command[1],dateFrom, dateTo);
                 view.Write("Журнал посещений за период с " + dateFormat.format(dateFrom) + " по " + dateFormat.format(dateTo));
                 view.Write("------------------------------------");
-                for (JournalEntry currentEntry : journal) {
-                    view.Write(currentEntry.toString());
-                }
+                view.Write(journal.toString());
                 view.Write("------------------------------------");
             } else {
                 view.Write("Неверный формат комманды");
