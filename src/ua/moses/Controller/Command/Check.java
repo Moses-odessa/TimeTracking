@@ -47,10 +47,10 @@ public class Check implements Command {
             Date setDateTime = dateFormat.parse(setDate + " " + setTime);
             if (command.length > 1 && !command[1].equals("")){
                 if (data.check(command[1], setType, setDateTime)) {
-                    view.Write(type + " сотрудника " + command[1] + " в " + setDateTime +" отмечен успешно" );
+                    view.Write(type + " сотрудника " + command[1] + " в " + dateFormat.format(setDateTime) +" отмечен успешно" );
 
                 } else {
-                    view.Write("Невозможно отметить " + type + " сотрудника " + command[1] + " в " + setDateTime);
+                    view.Write("Невозможно отметить " + type + " сотрудника " + command[1] + " в " + dateFormat.format(setDateTime));
                 }
             } else {
                 view.Write("Неверный формат комманды");

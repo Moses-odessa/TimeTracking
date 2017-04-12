@@ -46,7 +46,11 @@ public class Journal implements Command {
                 view.Write("------------------------------------");
                 for (Worker worker : workers){
                     TimeJournal journal = data.getJournal(worker, dateFrom, dateTo);
-                    view.Write(journal.toString());
+                    if (journal!= null){
+                        view.Write(journal.toString());
+                    }else{
+                        view.Write("Невозможно отобразить журнал. Проверьте параметры команды");
+                    }
                 }
                 view.Write("------------------------------------");
 

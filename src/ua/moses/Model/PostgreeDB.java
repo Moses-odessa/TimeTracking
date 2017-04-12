@@ -60,30 +60,33 @@ public class PostgreeDB implements DataOperations {
 
     @Override
     public boolean addWorker(String fullName) {
+        if (fullName.equals("")||fullName.isEmpty()||fullName.trim().length()<1) return false;
         String[] columns = Arrays.copyOfRange(workersTableColumns,1,2);
 
         String[] values = new String[1];
-        values[0] = fullName;
+        values[0] = fullName.trim();
         return addValue(workersTableName, columns, values);
 
     }
 
     @Override
     public boolean removeWorker(String idOrFullName) {
-        int id = getWorkerID(idOrFullName);
+        Worker worker = getWorker(idOrFullName);
+        if (!exist(worker)) return false;
 
-        removeValue(recordingTableName, "worker_id = " + id);
-        return removeValue(workersTableName, "id = " + id);
+        removeValue(recordingTableName, "worker_id = " + worker.getId());
+        return removeValue(workersTableName, "id = " + worker.getId());
     }
 
 
     @Override
     public boolean check(String idOrFullName, String type, Date datetime) {
-        int workerID = getWorkerID(idOrFullName);
+        Worker worker = getWorker(idOrFullName);
+        if (!exist(worker)) return false;
 
         String[] columns = Arrays.copyOfRange(recordingTableColumns,1,recordingTableColumns.length);
         Object[] values = new Object[recordingTableColumns.length-1];
-        values[0] = workerID;
+        values[0] = worker.getId();
         values[1] = type;
         values[2] = datetime.getTime();
 
@@ -110,6 +113,7 @@ public class PostgreeDB implements DataOperations {
 
     @Override
     public WorkTime getWorkingHours(Worker worker, Date dateFrom, Date dateTo) {
+        if (!exist(worker)) return null;
         WorkTime result = new WorkTime();
         result.setWorker(worker);
         try {
@@ -138,9 +142,30 @@ public class PostgreeDB implements DataOperations {
         return result;
     }
 
+    private boolean exist(Worker worker) {
+        boolean result = false;
+        try {
+            Statement stmt = connection.createStatement();
+            String sql = "SELECT COUNT(*) FROM public." + workersTableName +
+                    " WHERE (id=" + worker.getId() + " AND fullname='" + worker.getFullName() + "')";
+            ResultSet rsCount = stmt.executeQuery(sql);
+            rsCount.next();
+            if (rsCount.getInt(1)>0) {
+                result = true;
+            }
+            rsCount.close();
+         } catch (SQLException e) {
+            e.printStackTrace();
+         }
+
+        return result;
+
+    }
+
     @Override
     public TimeJournal getJournal(Worker worker, Date dateFrom, Date dateTo) {
         TimeJournal result = new TimeJournal();
+        if (!exist(worker)) return null;
         result.setWorker(worker);
         result.setDateFrom(dateFrom);
         result.setDateTo(dateTo);

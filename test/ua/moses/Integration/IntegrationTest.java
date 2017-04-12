@@ -80,6 +80,101 @@ public class IntegrationTest {
 
 
     @Test
+    public void testAddWithoutParameters() {
+        // given
+        console.addIn("add");
+        console.addIn("exit");
+        // when
+        Main.main(new String[0]);
+
+        // then
+        assertOut("Добро пожаловать!!!\n" +
+                "Введите нужную команду или help для вывода списка доступных команд:\n" +
+                "Неверный формат команды\n" +
+                "Введите нужную команду или help для вывода списка доступных команд:\n" +
+                "До скорой встречи!");
+    }
+
+    @Test
+    public void testAddBlancName() {
+        // given
+        console.addIn("add| ");
+        console.addIn("exit");
+        // when
+        Main.main(new String[0]);
+
+        // then
+        assertOut("Добро пожаловать!!!\n" +
+                "Введите нужную команду или help для вывода списка доступных команд:\n" +
+                "Ошибка добавления\n" +
+                "Введите нужную команду или help для вывода списка доступных команд:\n" +
+                "До скорой встречи!");
+    }
+
+    @Test
+    public void testRemoveWrongParameters() {
+        // given
+        console.addIn("remove");
+        console.addIn("remove|  ");
+        console.addIn("exit");
+        // when
+        Main.main(new String[0]);
+
+        // then
+        assertOut("Добро пожаловать!!!\n" +
+                "Введите нужную команду или help для вывода списка доступных команд:\n" +
+                "Неверный формат команды\n" +
+                "Введите нужную команду или help для вывода списка доступных команд:\n" +
+                "Ошибка удаления\n" +
+                "Введите нужную команду или help для вывода списка доступных команд:\n" +
+                "До скорой встречи!");
+    }
+
+    @Test
+    public void testJournalWrongParameters() {
+        // given
+        console.addIn("journal|  |2017-04-01|2017-04-01");
+        console.addIn("journal|  |fghfgh");
+        console.addIn("exit");
+        // when
+        Main.main(new String[0]);
+
+        // then
+        assertOut("Добро пожаловать!!!\n" +
+                "Введите нужную команду или help для вывода списка доступных команд:\n" +
+                "Журнал посещений за период с 2017-04-01 по 2017-04-01\n" +
+                "------------------------------------\n" +
+                "Невозможно отобразить журнал. Проверьте параметры команды\n" +
+                "------------------------------------\n" +
+                "Введите нужную команду или help для вывода списка доступных команд:\n" +
+                "Неверный формат даты/времени\n" +
+                "Введите нужную команду или help для вывода списка доступных команд:\n" +
+                "До скорой встречи!");
+    }
+
+    @Test
+    public void testChekWrongParameters() {
+        // given
+        console.addIn("checkin");
+        console.addIn("checkin| |09:00|2017-04-01");
+        console.addIn("checkout| |fkkk");
+        console.addIn("exit");
+        // when
+        Main.main(new String[0]);
+
+        // then
+        assertOut("Добро пожаловать!!!\n" +
+                "Введите нужную команду или help для вывода списка доступных команд:\n" +
+                "Неверный формат комманды\n" +
+                "Введите нужную команду или help для вывода списка доступных команд:\n" +
+                "Невозможно отметить Приход сотрудника   в 2017-04-01 09:00\n" +
+                "Введите нужную команду или help для вывода списка доступных команд:\n" +
+                "Неверный формат даты/времени\n" +
+                "Введите нужную команду или help для вывода списка доступных команд:\n" +
+                "До скорой встречи!");
+    }
+
+    @Test
     public void testWorkerAddRemoveList() {
         String testName = "Test Test Test";
         testWorkerListAdd(testName);
