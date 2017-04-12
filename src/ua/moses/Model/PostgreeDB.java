@@ -215,11 +215,12 @@ public class PostgreeDB implements DataOperations {
             Statement stmt = null;
             stmt = connection.createStatement();
             ResultSet rsCount = stmt.executeQuery("SELECT id FROM public." + workersTableName + " WHERE fullName='" + fullName +"'");
-            rsCount.next();
-            result = rsCount.getInt("id");
+            if (rsCount.next()) {
+                result = rsCount.getInt("id");
+            }
             rsCount.close();
         } catch (SQLException e) {
-            e.printStackTrace();
+            //e.printStackTrace();
         }
         return result;
     }
