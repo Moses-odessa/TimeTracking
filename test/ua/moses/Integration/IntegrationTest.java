@@ -170,7 +170,7 @@ public class IntegrationTest {
         Main.main(new String[0]);
 
         // then
-        assertContains(":" + testName + "2017-04-01 в 09:00- Приход ");
+        assertContains("2017-04-01 в 09:00- Приход ");
 
 
         testWorkerListRemove(testName);
@@ -190,7 +190,7 @@ public class IntegrationTest {
         Main.main(new String[0]);
 
         // then
-        assertContains(":" + testName + "2017-04-01 в 18:00- Уход   ");
+        assertContains("2017-04-01 в 18:00- Уход   ");
 
 
         testWorkerListRemove(testName);
