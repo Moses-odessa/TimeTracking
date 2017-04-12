@@ -10,8 +10,9 @@ public interface DataOperations {
     boolean addWorker(String fullName);
     boolean removeWorker(String idOrFullName);
     boolean check(String idOrFullName, String type, Date datetime);
-    WorkTime getWorkingHours(String idOrFullName, Date dateFrom, Date dateTo);
-    TimeJournal getJournal(String idOrFullName, Date dateFrom, Date dateTo);
+    Worker getWorker (String idOrFullName);
+    WorkTime getWorkingHours(Worker worker, Date dateFrom, Date dateTo);
+    TimeJournal getJournal(Worker worker, Date dateFrom, Date dateTo);
 
 
 }

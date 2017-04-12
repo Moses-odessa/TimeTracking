@@ -30,11 +30,12 @@ public class TimeJournal {
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
         result += this.worker.toString() + " с " + dateFormat.format(this.dateFrom) + " по " + dateFormat.format(this.dateTo) + "\n";
         dateFormat = new SimpleDateFormat("yyyy-MM-dd в HH:mm");
+        result += "- - - - - - - - - - - - - - - - - - -\n";
         for (Record entry: this.records) {
-            String type = (entry.type) ? ": Приход - " : ": Уход   - ";
-            result += entry.id + type + dateFormat.format(entry.date) + "\n";
+            String type = (entry.type) ? "- Приход" : "- Уход  ";
+            result += dateFormat.format(entry.date) + type + " (id:" + entry.id + ")"  + "\n";
         }
-
+        result += "- - - - - - - - - - - - - - - - - - -\n";
         return result;
     }
 

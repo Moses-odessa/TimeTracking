@@ -40,7 +40,7 @@ public class PostgreeDB implements DataOperations {
         try {
             int size = getSize(workersTableName);
             Statement stmt = connection.createStatement();
-            ResultSet rs = stmt.executeQuery("SELECT * FROM public." + workersTableName);
+            ResultSet rs = stmt.executeQuery("SELECT * FROM public." + workersTableName + " ORDER BY id");
             Worker[] result = new Worker[size];
             int index = 0;
             while (rs.next()) {
@@ -90,6 +90,14 @@ public class PostgreeDB implements DataOperations {
         return addValue(recordingTableName, columns, values);
     }
 
+    @Override
+    public Worker getWorker(String idOrFullName) {
+        Worker result = new Worker();
+        result.setId(getWorkerID(idOrFullName));
+        result.setFullName(getFullNameById(result.getId()));
+        return result;
+    }
+
     private int getWorkerID(String idOrFullName) {
         int workerID;
         if (isInt(idOrFullName)){
@@ -101,11 +109,8 @@ public class PostgreeDB implements DataOperations {
     }
 
     @Override
-    public WorkTime getWorkingHours(String idOrFullName, Date dateFrom, Date dateTo) {
+    public WorkTime getWorkingHours(Worker worker, Date dateFrom, Date dateTo) {
         WorkTime result = new WorkTime();
-        Worker worker = new Worker();
-        worker.setId(getWorkerID(idOrFullName));
-        worker.setFullName(getFullNameById(worker.getId()));
         result.setWorker(worker);
         try {
             Statement stmt;
@@ -134,11 +139,8 @@ public class PostgreeDB implements DataOperations {
     }
 
     @Override
-    public TimeJournal getJournal(String idOrFullName, Date dateFrom, Date dateTo) {
+    public TimeJournal getJournal(Worker worker, Date dateFrom, Date dateTo) {
         TimeJournal result = new TimeJournal();
-        Worker worker = new Worker();
-        worker.setId(getWorkerID(idOrFullName));
-        worker.setFullName(getFullNameById(worker.getId()));
         result.setWorker(worker);
         result.setDateFrom(dateFrom);
         result.setDateTo(dateTo);
