@@ -190,6 +190,26 @@ public class PostgreeDB implements DataOperations {
         return result;
     }
 
+    @Override
+    public boolean delRecord(String id) {
+        if (isInt(id)){
+            return removeValue(recordingTableName, "id = " + id);
+        } else{
+            return false;
+        }
+    }
+
+    @Override
+    public boolean updateRecord(String id, Date date) {
+        if (isInt(id)){
+            String[] columns = {"milisec"};
+            Object[] values = {date.getTime()};
+            return updateValue(recordingTableName, columns, values, "id = " + id);
+        } else{
+            return false;
+        }
+    }
+
     private String getFullNameById(int id) {
         String result="";
         try {
@@ -263,6 +283,34 @@ public class PostgreeDB implements DataOperations {
         } catch (SQLException e) {
             e.printStackTrace();
 
+        }
+        return result;
+    }
+
+    private boolean updateValue(String tableName, String [] columns, Object[] values, String criteria) {
+        boolean result = false;
+        try {
+            Statement stmt = connection.createStatement();
+            String sql = "UPDATE public." + tableName + " SET " + extractSetValues(columns, values) +
+                    " WHERE " + criteria;
+            if (stmt.executeUpdate(sql)>0) result = true;
+            stmt.close();
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+
+        }
+        return result;
+    }
+
+    private String extractSetValues(String[] columns, Object[] values) {
+        String result = "";
+        String framing = "'";
+        for (int i = 0; i < values.length; i++) {
+            result+= columns[i] + " = " + framing + values[i] + framing;
+            if (i < values.length - 1){
+                result+= ", ";
+            }
         }
         return result;
     }

@@ -27,6 +27,8 @@ public class MainController {
                 new Check(view, data),
                 new Show(view, data),
                 new Journal(view, data),
+                new DelRecord(view, data),
+                new UpdRecord(view, data),
                 new Unsupported(view)};
     }
 

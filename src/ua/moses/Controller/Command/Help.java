@@ -26,6 +26,8 @@ public class Help implements Command {
         view.Write(Check.description());
         view.Write(Show.description());
         view.Write(Journal.description());
+        view.Write(DelRecord.description());
+        view.Write(UpdRecord.description());
         view.Write(Help.description());
         view.Write("exit: завершение программы");
 

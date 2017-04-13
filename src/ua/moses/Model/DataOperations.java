@@ -13,6 +13,6 @@ public interface DataOperations {
     Worker getWorker (String idOrFullName);
     WorkTime getWorkingHours(Worker worker, Date dateFrom, Date dateTo);
     TimeJournal getJournal(Worker worker, Date dateFrom, Date dateTo);
-
-
+    boolean delRecord(String id);
+    boolean updateRecord(String id, Date date);
 }
