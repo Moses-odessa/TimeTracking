@@ -13,6 +13,7 @@ public class DelRecord implements Command {
     public DelRecord(View view, DataOperations data) {
         this.view = view;
         this.data = data;
+
     }
 
     @Override

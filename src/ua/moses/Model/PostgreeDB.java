@@ -13,10 +13,10 @@ public class PostgreeDB implements DataOperations {
     private Connection connection;
     private final String workersTableName = "employees";
     private final String recordingTableName = "notation";
-    private final String[] workersTableColumns = {"id","fullname"};
+    private final String[] workersTableColumns = {"id", "fullname"};
     private final String[] recordingTableColumns = {"id", "worker_id", "type", "milisec"};
 
-    public PostgreeDB(String database, String userName, String password){
+    public PostgreeDB(String database, String userName, String password) {
         try {
             Class.forName("org.postgresql.Driver");
         } catch (ClassNotFoundException e) {
@@ -33,6 +33,73 @@ public class PostgreeDB implements DataOperations {
                             database, userName),
                     e);
         }
+
+        try {
+            DatabaseMetaData dbm = connection.getMetaData();
+            ResultSet tables = dbm.getTables(null, null, workersTableName, null);
+            if (!tables.next()) {
+                createWorkersTable();
+            }
+            tables = dbm.getTables(null, null, recordingTableName, null);
+            if (!tables.next()) {
+                createRecordingTable();
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Can't check tables exists", e);
+        }
+
+    }
+
+    private void createRecordingTable() throws SQLException {
+        Statement stmt = connection.createStatement();
+        String sql = "CREATE SEQUENCE public." + recordingTableName + "_id_seq\n" +
+                "    INCREMENT 1\n" +
+                "    START 1\n" +
+                "    MINVALUE 1\n" +
+                "    MAXVALUE 9223372036854775807\n" +
+                "    CACHE 1;";
+        stmt.executeUpdate(sql);
+
+        sql = "CREATE TABLE public." + recordingTableName + "\n" +
+                "(\n" +
+                "    id integer NOT NULL DEFAULT nextval('" + recordingTableName + "_id_seq'::regclass),\n" +
+                "    worker_id integer NOT NULL,\n" +
+                "    type boolean NOT NULL,\n" +
+                "    milisec bigint NOT NULL,\n" +
+                "    CONSTRAINT " + recordingTableName + "_pkey PRIMARY KEY (id)\n" +
+                ")\n" +
+                "WITH (\n" +
+                "    OIDS = FALSE\n" +
+                ")\n" +
+                "TABLESPACE pg_default";
+        stmt.executeUpdate(sql);
+
+        stmt.close();
+    }
+
+    private void createWorkersTable() throws SQLException {
+        Statement stmt = connection.createStatement();
+        String sql = "CREATE SEQUENCE public." + workersTableName + "_id_seq\n" +
+                "    INCREMENT 1\n" +
+                "    START 1\n" +
+                "    MINVALUE 1\n" +
+                "    MAXVALUE 9223372036854775807\n" +
+                "    CACHE 1;";
+        stmt.executeUpdate(sql);
+
+        sql = "CREATE TABLE public." + workersTableName + "\n" +
+                "(\n" +
+                "    id integer NOT NULL DEFAULT nextval('" + workersTableName + "_id_seq'::regclass),\n" +
+                "    fullname text COLLATE pg_catalog.\"default\" NOT NULL,\n" +
+                "    CONSTRAINT " + workersTableName + "_pkey PRIMARY KEY (id)\n" +
+                ")\n" +
+                "WITH (\n" +
+                "    OIDS = FALSE\n" +
+                ")\n" +
+                "TABLESPACE pg_default";
+        stmt.executeUpdate(sql);
+
+        stmt.close();
     }
 
     @Override
@@ -60,8 +127,8 @@ public class PostgreeDB implements DataOperations {
 
     @Override
     public boolean addWorker(String fullName) {
-        if (fullName.equals("")||fullName.isEmpty()||fullName.trim().length()<1) return false;
-        String[] columns = Arrays.copyOfRange(workersTableColumns,1,2);
+        if (fullName.isEmpty() || fullName.trim().length() < 1 || getIdByFullName(fullName) > 0) return false;
+        String[] columns = Arrays.copyOfRange(workersTableColumns, 1, 2);
 
         String[] values = new String[1];
         values[0] = fullName.trim();
@@ -84,8 +151,8 @@ public class PostgreeDB implements DataOperations {
         Worker worker = getWorker(idOrFullName);
         if (!exist(worker)) return false;
 
-        String[] columns = Arrays.copyOfRange(recordingTableColumns,1,recordingTableColumns.length);
-        Object[] values = new Object[recordingTableColumns.length-1];
+        String[] columns = Arrays.copyOfRange(recordingTableColumns, 1, recordingTableColumns.length);
+        Object[] values = new Object[recordingTableColumns.length - 1];
         values[0] = worker.getId();
         values[1] = type;
         values[2] = datetime.getTime();
@@ -98,15 +165,20 @@ public class PostgreeDB implements DataOperations {
         Worker result = new Worker();
         result.setId(getWorkerID(idOrFullName));
         result.setFullName(getFullNameById(result.getId()));
-        return result;
+        if (result.getId() < 1 || result.getFullName().isEmpty()){
+            return null;
+        } else {
+            return result;
+        }
     }
 
     private int getWorkerID(String idOrFullName) {
-        int workerID;
-        if (isInt(idOrFullName)){
+        int workerID = -1;
+        if (isInt(idOrFullName)) {
             workerID = Integer.parseInt(idOrFullName);
         } else {
-            workerID = getIdByFullName(idOrFullName);;
+            workerID = getIdByFullName(idOrFullName);
+
         }
         return workerID;
     }
@@ -126,11 +198,11 @@ public class PostgreeDB implements DataOperations {
                     "FROM public." + recordingTableName + "\n" +
                     "WHERE worker_id=" + result.getWorker().getId() +
                     " AND milisec >= " + dateFrom.getTime() +
-                    " AND milisec < " + (dateTo.getTime()+ 24 * 60 * 60 * 1000)+"\n" +
+                    " AND milisec < " + (dateTo.getTime() + 24 * 60 * 60 * 1000) + "\n" +
                     "GROUP BY worker_id");
 
-            if (rsCount.next()){
-                result.setWorkingHours(rsCount.getLong("mili")/ (60 * 60 * 1000));
+            if (rsCount.next()) {
+                result.setWorkingHours(rsCount.getLong("mili") / (60 * 60 * 1000));
             } else {
                 result.setWorkingHours(0);
             }
@@ -144,19 +216,20 @@ public class PostgreeDB implements DataOperations {
 
     private boolean exist(Worker worker) {
         boolean result = false;
+        if (worker == null) return false;
         try {
             Statement stmt = connection.createStatement();
             String sql = "SELECT COUNT(*) FROM public." + workersTableName +
                     " WHERE (id=" + worker.getId() + " AND fullname='" + worker.getFullName() + "')";
             ResultSet rsCount = stmt.executeQuery(sql);
             rsCount.next();
-            if (rsCount.getInt(1)>0) {
+            if (rsCount.getInt(1) > 0) {
                 result = true;
             }
             rsCount.close();
-         } catch (SQLException e) {
-            e.printStackTrace();
-         }
+        } catch (SQLException e) {
+            //e.printStackTrace();
+        }
 
         return result;
 
@@ -176,10 +249,10 @@ public class PostgreeDB implements DataOperations {
                     "FROM public." + recordingTableName + "\n" +
                     "WHERE worker_id=" + worker.getId() +
                     " AND milisec >= " + dateFrom.getTime() +
-                    " AND milisec < " + (dateTo.getTime()+ 24 * 60 * 60 * 1000)+ "\n" +
+                    " AND milisec < " + (dateTo.getTime() + 24 * 60 * 60 * 1000) + "\n" +
                     "ORDER BY milisec");
 
-            while (rsCount.next()){
+            while (rsCount.next()) {
                 result.addRecord(rsCount.getInt("id"), new Date(rsCount.getLong("milisec")), rsCount.getBoolean("type"));
             }
             rsCount.close();
@@ -192,26 +265,26 @@ public class PostgreeDB implements DataOperations {
 
     @Override
     public boolean delRecord(String id) {
-        if (isInt(id)){
+        if (isInt(id)) {
             return removeValue(recordingTableName, "id = " + id);
-        } else{
+        } else {
             return false;
         }
     }
 
     @Override
     public boolean updateRecord(String id, Date date) {
-        if (isInt(id)){
+        if (isInt(id)) {
             String[] columns = {"milisec"};
             Object[] values = {date.getTime()};
             return updateValue(recordingTableName, columns, values, "id = " + id);
-        } else{
+        } else {
             return false;
         }
     }
 
     private String getFullNameById(int id) {
-        String result="";
+        String result = "";
         try {
             Statement stmt = null;
             stmt = connection.createStatement();
@@ -229,12 +302,12 @@ public class PostgreeDB implements DataOperations {
     }
 
 
-    private int getIdByFullName(String fullName)  {
-        int result=-1;
+    private int getIdByFullName(String fullName) {
+        int result = -1;
         try {
             Statement stmt = null;
             stmt = connection.createStatement();
-            ResultSet rsCount = stmt.executeQuery("SELECT id FROM public." + workersTableName + " WHERE fullName='" + fullName +"'");
+            ResultSet rsCount = stmt.executeQuery("SELECT id FROM public." + workersTableName + " WHERE fullName='" + fullName + "'");
             if (rsCount.next()) {
                 result = rsCount.getInt("id");
             }
@@ -260,7 +333,7 @@ public class PostgreeDB implements DataOperations {
             Statement stmt = connection.createStatement();
 
             String sql = "DELETE FROM public." + tableName + " WHERE " + criteria;
-            if (stmt.executeUpdate(sql)>0) result = true;
+            if (stmt.executeUpdate(sql) > 0) result = true;
             stmt.close();
 
         } catch (SQLException e) {
@@ -270,14 +343,14 @@ public class PostgreeDB implements DataOperations {
         return result;
     }
 
-    private boolean addValue(String tableName, String [] columns, Object[] values) {
+    private boolean addValue(String tableName, String[] columns, Object[] values) {
         boolean result = false;
         try {
             Statement stmt = connection.createStatement();
 
             String sql = "INSERT INTO public." + tableName + " (" + extractValues(columns, "") + ")" +
                     "VALUES (" + extractValues(values, "'") + ")";
-            if (stmt.executeUpdate(sql)>0) result = true;
+            if (stmt.executeUpdate(sql) > 0) result = true;
             stmt.close();
 
         } catch (SQLException e) {
@@ -287,13 +360,13 @@ public class PostgreeDB implements DataOperations {
         return result;
     }
 
-    private boolean updateValue(String tableName, String [] columns, Object[] values, String criteria) {
+    private boolean updateValue(String tableName, String[] columns, Object[] values, String criteria) {
         boolean result = false;
         try {
             Statement stmt = connection.createStatement();
             String sql = "UPDATE public." + tableName + " SET " + extractSetValues(columns, values) +
                     " WHERE " + criteria;
-            if (stmt.executeUpdate(sql)>0) result = true;
+            if (stmt.executeUpdate(sql) > 0) result = true;
             stmt.close();
 
         } catch (SQLException e) {
@@ -307,9 +380,9 @@ public class PostgreeDB implements DataOperations {
         String result = "";
         String framing = "'";
         for (int i = 0; i < values.length; i++) {
-            result+= columns[i] + " = " + framing + values[i] + framing;
-            if (i < values.length - 1){
-                result+= ", ";
+            result += columns[i] + " = " + framing + values[i] + framing;
+            if (i < values.length - 1) {
+                result += ", ";
             }
         }
         return result;
@@ -318,9 +391,9 @@ public class PostgreeDB implements DataOperations {
     private String extractValues(Object[] values, String framing) {
         String result = "";
         for (int i = 0; i < values.length; i++) {
-            result+=framing + values[i] + framing;
-            if (i < values.length - 1){
-                result+= ", ";
+            result += framing + values[i] + framing;
+            if (i < values.length - 1) {
+                result += ", ";
             }
         }
         return result;
